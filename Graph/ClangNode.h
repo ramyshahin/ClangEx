@@ -33,6 +33,7 @@
 #include <boost/filesystem/path.hpp>
 #include <clang/Basic/Specifiers.h>
 #include <clang/Sema/Scope.h>
+#include <clang/AST/Decl.h>
 
 class ClangNode {
 private:

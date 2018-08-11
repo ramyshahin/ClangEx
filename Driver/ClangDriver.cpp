@@ -261,14 +261,14 @@ bool ClangDriver::processAllFiles(bool blobMode, string mergeFile, bool lowMemor
     TAGraph::ClangExclude exclude = toggle;
 
     //Dump settings.
-    if (lowMemory) dynamic_cast<LowMemoryTAGraph*>(mergeGraph)->dumpSettings(files, exclude, blobMode);
+    if (lowMemory) static_cast<LowMemoryTAGraph*>(mergeGraph)->dumpSettings(files, exclude, blobMode);
 
     //Creates the command line arguments.
     int fileSplit = (lowMemory) ? FILE_SPLIT : getNumFiles();
     clangPrint->printProcessStatus(Printer::COMPILING);
     for (int i = startNum; i < getNumFiles(); i += fileSplit) {
         runAnalysis(blobMode, lowMemory, mergeGraph, i, clangPrint, exclude, OptionsParser);
-        if (lowMemory) dynamic_cast<LowMemoryTAGraph*>(mergeGraph)->purgeCurrentGraph();
+        if (lowMemory) static_cast<LowMemoryTAGraph*>(mergeGraph)->purgeCurrentGraph();
     }
 
     //Shifts the graphs.
@@ -304,13 +304,13 @@ bool ClangDriver::processAllFiles(bool blobMode, string mergeFile, bool lowMemor
 bool ClangDriver::runAnalysis(bool blobMode, bool lowMemory, TAGraph* mergeGraph, int i, Printer* clangPrint,
                               TAGraph::ClangExclude exclude, CommonOptionsParser* OptionsParser) {
     ASTWalker *walker;
-    unique_ptr<FrontendActionFactory> act;
+    std::unique_ptr<FrontendActionFactory> act;
     bool success = true;
 
     vector<string> curList;
     curList.push_back(files.at(i).string());
 
-    if (lowMemory) dynamic_cast<LowMemoryTAGraph*>(mergeGraph)->dumpCurrentFile(i, files.at(i).string());
+    if (lowMemory) static_cast<LowMemoryTAGraph*>(mergeGraph)->dumpCurrentFile(i, files.at(i).string());
 
     //Sets up the processor.
     ClangTool* Tool = new ClangTool(OptionsParser->getCompilations(),
@@ -566,7 +566,7 @@ bool ClangDriver::changeLowMemoryLoc(path curLoc){
             rename(srcRoot + LowMemoryTAGraph::BASE_RELATION_FN, dstRoot + LowMemoryTAGraph::BASE_RELATION_FN);
             rename(srcRoot + LowMemoryTAGraph::BASE_ATTRIBUTE_FN, dstRoot + LowMemoryTAGraph::BASE_ATTRIBUTE_FN);
 
-            dynamic_cast<LowMemoryTAGraph*>(graphs.at(cur))->changeRoot(curLoc.string());
+            static_cast<LowMemoryTAGraph*>(graphs.at(cur))->changeRoot(curLoc.string());
         }
     }
 

@@ -150,8 +150,8 @@ string ASTWalker::generateID(const MatchFinder::MatchResult result, const NamedD
  */
 string ASTWalker::generateLabel(const MatchFinder::MatchResult result, const NamedDecl* curDecl) {
     string name = curDecl->getNameAsString();
-    if (isa<RecordDecl>(curDecl) && (dyn_cast<RecordDecl>(curDecl)->isStruct()
-                                 || dyn_cast<RecordDecl>(curDecl)->isUnion())
+    if (isa<RecordDecl>(curDecl) && (static_cast<const RecordDecl*>(curDecl)->isStruct()
+                                 || static_cast<const RecordDecl*>(curDecl)->isUnion())
                                  && isAnonymousRecord(curDecl->getQualifiedNameAsString())) {
         name = ANON_REPLACE + "-" + generateLineNumber(result, curDecl->getSourceRange().getBegin());
     }
@@ -774,7 +774,7 @@ void ASTWalker::printFileName(string curFile){
  */
 string ASTWalker::generateIDString(const MatchFinder::MatchResult result, const NamedDecl *dec) {
     //Gets the canonical decl.
-    dec = dyn_cast<NamedDecl>(dec->getCanonicalDecl());
+    dec = static_cast<const NamedDecl*>(dec->getCanonicalDecl());
     string name = "";
 
     if (isa<FunctionDecl>(dec) || isa<CXXMethodDecl>(dec)){
@@ -784,9 +784,9 @@ string ASTWalker::generateIDString(const MatchFinder::MatchResult result, const 
         for (int i = 0; i < cur->getNumParams(); i++){
             name += "-" + cur->parameters().data()[i]->getType().getAsString();
         }
-    } else if (isa<RecordDecl>(dec) && (dyn_cast<RecordDecl>(dec)->isStruct() || dyn_cast<RecordDecl>(dec)->isUnion())) {
+    } else if (isa<RecordDecl>(dec) && (static_cast<const RecordDecl*>(dec)->isStruct() || static_cast<const RecordDecl*>(dec)->isUnion())) {
         //Generates a special name for structs and unions (especially anonymous ones).
-        const RecordDecl* cur = dyn_cast<RecordDecl>(dec);
+        const RecordDecl* cur = static_cast<const RecordDecl*>(dec);
         if (isAnonymousRecord(cur->getQualifiedNameAsString())){
             name = ANON_REPLACE + "-" + generateLineNumber(result, cur->getSourceRange().getBegin()) + "-" +
                     generateFileName(result, cur->getSourceRange().getBegin());
