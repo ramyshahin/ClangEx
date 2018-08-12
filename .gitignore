@@ -10,3 +10,6 @@ include
 *.autosave
 *.ta
 compile_commands.json
+.vscode/launch.json
+# Ignore VS Code launch files
+launch.json

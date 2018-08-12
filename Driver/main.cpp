@@ -267,13 +267,13 @@ void generateCommandSystem(map<string, ClangExHandler>* helpMap, map<string, str
 
     //Generate the help for output.
     (*helpMap)[OUT_ARG] = ClangExHandler(OUT_ARG, po::options_description("Options"));
-    helpMap->at(OUT_ARG).desc->add_options()
-            ("help,h", "Print help message for output.")
-            ("select,s", po::value<std::string>(), "Only outputs select graphs based on their number.")
-            ("outputFile", po::value<std::vector<std::string>>(), "The base file name to save.");
+    helpMap->at(OUT_ARG).desc->add_options();
+    //        ("help,h", "Print help message for output.")
+    //        ("select,s", po::value<std::string>(), "Only outputs select graphs based on their number.")
+    //        ("outputFile", po::value<std::vector<std::string>>(), "The base file name to save.");
     ss.str(string());
     ss << *helpMap->at(OUT_ARG).desc;
-    (*helpString)[OUT_ARG] = string("Output Help\nUsage: " + OUT_ARG + " [options] outputFile\nOutputs the generated"
+    (*helpString)[OUT_ARG] = string("Output Help\nUsage: " + OUT_ARG + " outputFile\nOutputs the generated"
             " graphs to a tuple-attribute (TA) file based on the\nClangEx schema. These models can then be used"
             " by other programs.\n\n" + ss.str());
 
@@ -643,94 +643,25 @@ void processGenerate(string line, po::options_description desc){
 void processOutput(string line, po::options_description desc){
     //Generates the arguments.
     vector<string> tokens = tokenizeBySpace(line);
-    char** argv = createArgv(tokens);
-    int argc = (int) tokens.size();
-
-    string outputValues = string();;
-    vector<int> outputIndex;
-
-    //Processes the command line args.
-    po::positional_options_description positionalOptions;
-    positionalOptions.add("outputFile", 1);
-
-    po::variables_map vm;
-    try {
-        po::store(po::command_line_parser(argc, (const char* const*) argv).options(desc)
-                          .positional(positionalOptions).run(), vm);
-        po::notify(vm);
-
-        //Checks if help was enabled.
-        if (vm.count("help")){
-            cout << "Usage: output [options] OutputName" << endl << desc;
-            for (int i = 0; i < argc; i++) delete[] argv[i];
-            delete[] argv;
-            return;
-        }
-
-        //Check the number of graphs.
-        if (driver.getNumGraphs() == 0){
-            cerr << "Error: There are no graphs to output!" << endl;
-            for (int i = 0; i < argc; i++) delete[] argv[i];
-            delete[] argv;
-            return;
-        }
-
-        //Checks if the user specified an output directory.
-        if (!vm.count("outputFile")){
-            throw po::error("You must specify an output base name!");
-        }
-
-        //Checks if selective output was enabled.
-        if (vm.count("select")){
-            outputValues = vm["select"].as<std::string>();
-
-            //Now, parses the values.
-            stringstream ss(outputValues);
-            int i;
-            while (ss >> i){
-                outputIndex.push_back(i);
-            }
-
-            //Check for validity.
-            if (outputIndex.size() == 0){
-                throw po::error("Format the --select argument as 1,2,3,5.");
-            }
-        }
-
-        po::notify(vm);
-    } catch(po::error& e) {
-        cerr << "Error: " << e.what() << endl;
-        cerr << desc;
-        for (int i = 0; i < argc; i++) delete[] argv[i];
-        delete[] argv;
+    if (driver.getNumGraphs() == 0){
+        cerr << "Error: There are no graphs to output!" << endl;
         return;
     }
 
-    vector<string> outputVec = vm["outputFile"].as<std::vector<std::string>>();
-    string output = outputVec.at(0);
+    if (tokens.size() != 2) {
+        cerr << "Error: You need to pass a base file name" << endl;
+        return;
+    }
+
+    string output = tokens[1];
     bool success = false;
 
     //Now, outputs the graphs.
-    if (outputValues.compare(string()) == 0){
-        //We output all the graphs.
-        if (driver.getNumGraphs() == 1){
-            success = driver.outputIndividualModel(0, output);
-        } else {
-            success = driver.outputAllModels(output);
-        }
+    //We output all the graphs.
+    if (driver.getNumGraphs() == 1){
+        success = driver.outputIndividualModel(0, output);
     } else {
-        //We selectively output the graphs.
-        for (int indexNum : outputIndex){
-            if (indexNum < 0 || indexNum >= driver.getNumGraphs()){
-                cerr << "Error: There are only " << driver.getNumGraphs()
-                     << " graphs! " << indexNum << " is out of bounds." << endl;
-                for (int i = 0; i < argc; i++) delete[] argv[i];
-                delete[] argv;
-                return;
-            }
-
-            success = driver.outputIndividualModel(indexNum, output);
-        }
+        success = driver.outputAllModels(output);
     }
 
     if (!success) {
@@ -739,9 +670,6 @@ void processOutput(string line, po::options_description desc){
         cout << "Contribution networks created successfully." << endl;
         changed = false;
     }
-
-    for (int i = 0; i < argc; i++) delete[] argv[i];
-    delete[] argv;
 }
 
 /**
